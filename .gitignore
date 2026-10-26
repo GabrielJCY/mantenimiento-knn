@@ -1,0 +1,21 @@
+# Python
+.venv/
+venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# Node
+node_modules/
+dist/
+
+# Variables privadas
+.env
+.env.*
+!.env.example
+
+# Vercel
+.vercel/
+
+# Sistema
+.DS_Store
