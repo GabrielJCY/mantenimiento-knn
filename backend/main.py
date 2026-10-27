@@ -28,8 +28,7 @@ app = FastAPI(
 # CONFIGURACIÓN CORS - LOCALHOST Y VERCEL
 # ==========================================================
 
-# URL del frontend publicada en Vercel.
-# Se configura mediante Environment Variables.
+# Dominio adicional opcional desde variables de entorno.
 
 FRONTEND_ORIGIN = os.getenv(
     "FRONTEND_ORIGIN",
@@ -37,17 +36,23 @@ FRONTEND_ORIGIN = os.getenv(
 ).rstrip("/")
 
 
-# Direcciones permitidas durante el desarrollo local.
+# Dominios autorizados para comunicarse con FastAPI.
 
 origins = [
+
+    # Desarrollo local
     "http://localhost:5173",
     "http://127.0.0.1:5173",
+
+    # Frontend oficial publicado en Vercel
+    "https://motoria-chi.vercel.app",
+
 ]
 
 
-# Añadir automáticamente el dominio de producción.
+# Añadir otro dominio si está configurado en Vercel.
 
-if FRONTEND_ORIGIN:
+if FRONTEND_ORIGIN and FRONTEND_ORIGIN not in origins:
     origins.append(FRONTEND_ORIGIN)
 
 
@@ -57,7 +62,7 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
     allow_credentials=False,
-    allow_methods=["GET", "POST"],
+    allow_methods=["GET", "POST", "OPTIONS"],
     allow_headers=["*"],
 )
 
@@ -183,21 +188,23 @@ def predecir(solicitud: SolicitudPrediccion):
             )
         )
 
-    # Inicializar y entrenar el clasificador K-NN.
+    # Inicializar el clasificador K-NN.
 
     modelo = KNN(
         k=solicitud.k
     )
 
+    # Entrenar utilizando los registros históricos.
+
     modelo.entrenar(
         REGISTROS
     )
 
-    # Obtener las variables del motor.
+    # Obtener las características del motor.
 
     datos_motor = solicitud.motor.model_dump()
 
-    # Clasificar el estado del equipo.
+    # Ejecutar la clasificación.
 
     resultado = modelo.predecir(
         datos_motor
@@ -219,6 +226,8 @@ def evaluacion(
         description="Número de vecinos para la evaluación"
     )
 ):
+
+    # Evaluar mediante validación Leave-One-Out.
 
     resultado = evaluar_loo(
         REGISTROS,
